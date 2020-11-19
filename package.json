@@ -1,0 +1,58 @@
+{
+  "name": "action-local-cache",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A Github Action to save and restore files across job runs directly in the runner's file system",
+  "main": "dist/main/index.ts",
+  "engines": {
+    "node": "^12.13.0"
+  },
+  "scripts": {
+    "all": "npm run format && npm run lint && npm run type-check && npm run pack && npm test",
+    "format-check": "prettier --check **/*.ts",
+    "format": "prettier --write **/*.ts",
+    "lint": "eslint src/**/*.ts",
+    "pack": "ncc build src/main.ts --out dist/main && ncc build src/post.ts --out dist/post",
+    "test": "jest",
+    "type-check": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MasterworksIO/action-local-cache.git"
+  },
+  "keywords": [
+    "actions",
+    "node",
+    "self-hosted",
+    "runner"
+  ],
+  "author": "Masterworks",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "^1.2.6",
+    "@actions/io": "^1.0.2",
+    "loglevel": "^1.7.0"
+  },
+  "devDependencies": {
+    "@stefanmaric/eslint-config-munchies-base": "^0.3.0",
+    "@stefanmaric/eslint-config-munchies-gourmet": "^0.3.0",
+    "@stefanmaric/eslint-config-munchies-modern": "^0.3.0",
+    "@stefanmaric/eslint-config-munchies-modules": "^0.3.0",
+    "@stefanmaric/eslint-config-munchies-node": "^0.3.0",
+    "@types/jest": "^26.0.15",
+    "@types/node": "^14.14.8",
+    "@typescript-eslint/eslint-plugin": "^4.8.1",
+    "@typescript-eslint/parser": "^4.8.1",
+    "@vercel/ncc": "^0.25.1",
+    "eslint": "^7.13.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jest": "^24.1.3",
+    "eslint-plugin-node": "^11.1.0",
+    "jest": "^26.6.3",
+    "jest-circus": "^26.6.3",
+    "js-yaml": "^3.14.0",
+    "prettier": "^2.1.2",
+    "ts-jest": "^26.4.4",
+    "typescript": "^4.0.5"
+  }
+}

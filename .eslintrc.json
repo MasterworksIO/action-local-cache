@@ -1,0 +1,51 @@
+{
+  "plugins": ["jest", "@typescript-eslint"],
+  "extends": [
+    "plugin:@typescript-eslint/recommended",
+    "@stefanmaric/eslint-config-munchies-base",
+    "@stefanmaric/eslint-config-munchies-node",
+    "@stefanmaric/eslint-config-munchies-modern",
+    "@stefanmaric/eslint-config-munchies-modules",
+    "@stefanmaric/eslint-config-munchies-gourmet",
+    "plugin:import/typescript"
+  ],
+  "env": {
+    "es6": true,
+    "node": true
+  },
+  "overrides": [
+    {
+      "env": {
+        "jest": true,
+        "jest/globals": true
+      },
+      "extends": ["plugin:jest/recommended"],
+      "files": ["__tests__/**/*"]
+    }
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module",
+    "project": "./tsconfig.json"
+  },
+  "root": true,
+  "rules": {
+    "@typescript-eslint/member-delimiter-style": ["error", {
+      "multiline": {
+        "delimiter": "none",
+        "requireLast": false
+      },
+      "singleline": {
+        "delimiter": "semi",
+        "requireLast": false
+      }
+    }],
+    "node/no-unsupported-features/es-syntax": "off"
+  },
+  "settings": {
+    "node": {
+      "tryExtensions": [".js", ".json", ".ts"]
+    }
+  }
+}

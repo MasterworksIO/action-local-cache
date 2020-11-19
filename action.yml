@@ -1,0 +1,17 @@
+name: 'local-cache'
+description: "A Github Action to save and restore files across job runs directly in the runner's file system"
+inputs:
+  key:
+    description: 'An explicit key for versioning the cache'
+    required: false
+  path:
+    description: 'The file or folder to be cached'
+    required: true
+outputs:
+  cache-hit:
+    description: 'A boolean value to indicate if cache was found and restored'
+runs:
+  using: 'node12'
+  main: 'dist/main/index.js'
+  post: 'dist/post/index.js'
+  post-if: success()
