@@ -1,13 +1,14 @@
 {
-  "plugins": ["jest", "@typescript-eslint"],
+  "plugins": ["jest"],
   "extends": [
-    "plugin:@typescript-eslint/recommended",
-    "@stefanmaric/eslint-config-munchies-base",
-    "@stefanmaric/eslint-config-munchies-node",
-    "@stefanmaric/eslint-config-munchies-modern",
-    "@stefanmaric/eslint-config-munchies-modules",
-    "@stefanmaric/eslint-config-munchies-gourmet",
-    "plugin:import/typescript"
+    "@masterworks/eslint-config-masterworks/base",
+    "@masterworks/eslint-config-masterworks/modern",
+    "@masterworks/eslint-config-masterworks/modules",
+    "@masterworks/eslint-config-masterworks/node",
+    "@masterworks/eslint-config-masterworks/stylish",
+    "@masterworks/eslint-config-masterworks/typescript",
+    "@masterworks/eslint-config-masterworks/typescript-strict",
+    "@masterworks/eslint-config-masterworks/typescript-stylish"
   ],
   "env": {
     "es6": true,
@@ -23,24 +24,8 @@
       "files": ["__tests__/**/*"]
     }
   ],
-  "parser": "@typescript-eslint/parser",
-  "parserOptions": {
-    "ecmaVersion": 2020,
-    "sourceType": "module",
-    "project": "./tsconfig.json"
-  },
   "root": true,
   "rules": {
-    "@typescript-eslint/member-delimiter-style": ["error", {
-      "multiline": {
-        "delimiter": "none",
-        "requireLast": false
-      },
-      "singleline": {
-        "delimiter": "semi",
-        "requireLast": false
-      }
-    }],
     "node/no-unsupported-features/es-syntax": "off"
   },
   "settings": {
