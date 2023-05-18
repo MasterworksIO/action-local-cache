@@ -7,6 +7,9 @@ inputs:
   path:
     description: 'The file or folder to be cached'
     required: true
+  delete:
+    description: 'Deletes specified cache (true/false)'
+    required: false
 outputs:
   cache-hit:
     description: 'A boolean value to indicate if cache was found and restored'

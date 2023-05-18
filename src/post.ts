@@ -10,7 +10,9 @@ async function post(): Promise<void> {
     const { cacheDir, targetPath, cachePath } = getVars()
 
     await mkdirP(cacheDir)
-    await mv(targetPath, cachePath, { force: true })
+    if (targetPath) {
+      await mv(targetPath, cachePath, { force: true })
+    }
   } catch (error: unknown) {
     log.trace(error)
     setFailed(isErrorLike(error) ? error.message : `unknown error: ${error}`)
