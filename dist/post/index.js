@@ -2432,13 +2432,28 @@ const getVars = () => {
         throw new TypeError('Expected GITHUB_REPOSITORY environment variable to be defined.');
     }
     const options = {
-        key: core.getInput('key') || 'no-key',
+        key: core.getInput('key'),
         path: core.getInput('path'),
+        delete: core.getBooleanInput('delete'),
     };
+    const cacheDir = path_1.default.join(RUNNER_TOOL_CACHE, GITHUB_REPOSITORY, options.key);
+    if (options.delete) {
+        if (!options.key) {
+            throw new TypeError('when deleting, "key" is required but was not provided.');
+        }
+        const { key } = options;
+        if (key.includes('..') || key.includes('*') || key.includes('/') || key.includes('~')) {
+            throw new TypeError('"key" includes wildcard characters, something fishy is going on.');
+        }
+        return {
+            cacheDir,
+            cachePath: cacheDir,
+            options,
+        };
+    }
     if (!options.path) {
         throw new TypeError('path is required but was not provided.');
     }
-    const cacheDir = path_1.default.join(RUNNER_TOOL_CACHE, GITHUB_REPOSITORY, options.key);
     const cachePath = path_1.default.join(cacheDir, options.path);
     const targetPath = path_1.default.resolve(CWD, options.path);
     const { dir: targetDir } = path_1.default.parse(targetPath);
@@ -2518,7 +2533,9 @@ async function post() {
     try {
         const { cacheDir, targetPath, cachePath } = (0, getVars_1.getVars)();
         await (0, io_1.mkdirP)(cacheDir);
-        await (0, io_1.mv)(targetPath, cachePath, { force: true });
+        if (targetPath) {
+            await (0, io_1.mv)(targetPath, cachePath, { force: true });
+        }
     }
     catch (error) {
         log_1.default.trace(error);

@@ -2432,13 +2432,28 @@ const getVars = () => {
         throw new TypeError('Expected GITHUB_REPOSITORY environment variable to be defined.');
     }
     const options = {
-        key: core.getInput('key') || 'no-key',
+        key: core.getInput('key'),
         path: core.getInput('path'),
+        delete: core.getBooleanInput('delete'),
     };
+    const cacheDir = path_1.default.join(RUNNER_TOOL_CACHE, GITHUB_REPOSITORY, options.key);
+    if (options.delete) {
+        if (!options.key) {
+            throw new TypeError('when deleting, "key" is required but was not provided.');
+        }
+        const { key } = options;
+        if (key.includes('..') || key.includes('*') || key.includes('/') || key.includes('~')) {
+            throw new TypeError('"key" includes wildcard characters, something fishy is going on.');
+        }
+        return {
+            cacheDir,
+            cachePath: cacheDir,
+            options,
+        };
+    }
     if (!options.path) {
         throw new TypeError('path is required but was not provided.');
     }
-    const cacheDir = path_1.default.join(RUNNER_TOOL_CACHE, GITHUB_REPOSITORY, options.key);
     const cachePath = path_1.default.join(cacheDir, options.path);
     const targetPath = path_1.default.resolve(CWD, options.path);
     const { dir: targetDir } = path_1.default.parse(targetPath);
@@ -2515,13 +2530,25 @@ const io_util_1 = __nccwpck_require__(962);
 const getVars_1 = __nccwpck_require__(997);
 const isErrorLike_1 = __nccwpck_require__(196);
 const log_1 = __importDefault(__nccwpck_require__(853));
+async function deleteCache(path) {
+    await (0, io_1.rmRF)(path);
+    log_1.default.info(`Cache found and deleted at ${path}`);
+}
+async function restoreCache(cachePath, targetDir, targetPath) {
+    await (0, io_1.mkdirP)(targetDir);
+    await (0, io_1.mv)(cachePath, targetPath, { force: true });
+    log_1.default.info(`Cache found and restored to ${targetPath}`);
+}
 async function main() {
     try {
         const { cachePath, targetDir, targetPath, options } = (0, getVars_1.getVars)();
         if (await (0, io_util_1.exists)(cachePath)) {
-            await (0, io_1.mkdirP)(targetDir);
-            await (0, io_1.mv)(cachePath, targetPath, { force: true });
-            log_1.default.info(`Cache found and restored to ${options.path}`);
+            if (options.delete) {
+                await deleteCache(cachePath);
+            }
+            else if (targetDir && targetPath) {
+                await restoreCache(cachePath, targetDir, targetPath);
+            }
             (0, core_1.setOutput)('cache-hit', true);
         }
         else {
