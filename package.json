@@ -30,7 +30,7 @@
   "author": "Masterworks",
   "license": "MIT",
   "dependencies": {
-    "@actions/core": "^1.2.6",
+    "@actions/core": "^1.10.0",
     "@actions/io": "^1.0.2",
     "loglevel": "^1.7.0"
   },
