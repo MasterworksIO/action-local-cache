@@ -1,10 +1,10 @@
 {
-  "plugins": ["jest"],
+  "plugins": ["jest", "@typescript-eslint"],
   "extends": [
     "@masterworks/eslint-config-masterworks/base",
+    "@masterworks/eslint-config-masterworks/node",
     "@masterworks/eslint-config-masterworks/modern",
     "@masterworks/eslint-config-masterworks/modules",
-    "@masterworks/eslint-config-masterworks/node",
     "@masterworks/eslint-config-masterworks/stylish",
     "@masterworks/eslint-config-masterworks/typescript",
     "@masterworks/eslint-config-masterworks/typescript-strict",
@@ -24,6 +24,12 @@
       "files": ["__tests__/**/*"]
     }
   ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module",
+    "project": "./tsconfig.json"
+  },
   "root": true,
   "rules": {
     "node/no-unsupported-features/es-syntax": "off"
