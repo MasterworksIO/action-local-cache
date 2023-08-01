@@ -1,0 +1,47 @@
+name: Push
+on: push
+
+env:
+  SHARED_CACHE_RUN_KEY: CACHE_V1-${{ github.run_id }}-${{ github.run_attempt }}
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: npm install
+    - run: npm run all
+
+  first-run:
+    runs-on:
+      group: local-action-cache
+    steps:
+    - uses: actions/checkout@v3
+    - name: 'Run first time without cache'
+      id: 'first-run'
+      uses: ./
+      with:
+        path: './demo-output.txt'
+        key: ${{ env.SHARED_CACHE_RUN_KEY }}
+    - name: Assert output
+      if: steps.first-run.outputs.cache-hit == 'true'
+      run: echo "Should not have done cache hit" && exit 1
+    - name: Write cache file
+      run: echo "demo-results" > ./demo-output.txt
+
+  second-run:
+    runs-on:
+      group: local-action-cache
+    needs: [first-run]
+    steps:
+    - uses: actions/checkout@v3
+    - uses: ./
+      id: 'second-run'
+      with:
+        path: './demo-output.txt'
+        key: ${{ env.SHARED_CACHE_RUN_KEY }}
+    - name: Assert output
+      if: steps.second-run.outputs.cache-hit != 'true'
+      run: echo "Should have hit cache" && exit 1
+    - name: Check contents
+      run: cat ./demo-output.txt

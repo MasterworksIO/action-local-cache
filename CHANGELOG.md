@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add basic test running in specific runner
 - Replace ncc with tsup and fix misc lint issues
 - Upgrade nodejs version and all dependencies
 
