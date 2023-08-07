@@ -17,7 +17,7 @@ jobs:
 
       - name: Local cache for API dependencies
         id: api-cache
-        uses: MasterworksIO/action-local-cache@1.0.0
+        uses: MasterworksIO/action-local-cache@2
         with:
           path: './api/node_modules/'
           key: 'api-dependencies-v1'
