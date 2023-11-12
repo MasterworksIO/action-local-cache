@@ -1,6 +1,8 @@
 'use strict';
 
 var crypto = require('crypto');
+var child_process = require('child_process');
+var util = require('util');
 var path = require('path');
 
 function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
@@ -2443,7 +2445,7 @@ var require_io = __commonJS({
     var assert_1 = __require("assert");
     var path2 = __importStar(__require("path"));
     var ioUtil = __importStar(require_io_util());
-    function cp(source, dest, options = {}) {
+    function cp2(source, dest, options = {}) {
       return __awaiter(this, void 0, void 0, function* () {
         const { force, recursive, copySourceDirectory } = readCopyOptions(options);
         const destStat = (yield ioUtil.exists(dest)) ? yield ioUtil.stat(dest) : null;
@@ -2469,7 +2471,7 @@ var require_io = __commonJS({
         }
       });
     }
-    exports.cp = cp;
+    exports.cp = cp2;
     function mv2(source, dest, options = {}) {
       return __awaiter(this, void 0, void 0, function* () {
         if (yield ioUtil.exists(dest)) {
@@ -2878,7 +2880,8 @@ var getVars = () => {
   }
   const options = {
     key: core.getInput("key") || "no-key",
-    path: core.getInput("path")
+    path: core.getInput("path"),
+    copyStrategy: core.getInput("copy-strategy")
   };
   if (!options.path) {
     throw new TypeError("path is required but was not provided.");
@@ -2917,13 +2920,27 @@ if (process.env.LOG_LEVEL) {
 var log_default = import_loglevel.default;
 
 // src/main.ts
+var rsync = util.promisify(child_process.spawn);
 async function main() {
   try {
     const { cachePath, targetDir, targetPath, options } = getVars();
     if (await (0, import_io_util.exists)(cachePath)) {
       await (0, import_io.mkdirP)(targetDir);
-      await (0, import_io.mv)(cachePath, targetPath, { force: true });
-      log_default.info(`Cache found and restored to ${options.path}`);
+      if (options.copyStrategy === "move") {
+        await (0, import_io.mv)(cachePath, targetPath, { force: true });
+      } else if (options.copyStrategy === "copy") {
+        await (0, import_io.cp)(cachePath, targetPath, {
+          copySourceDirectory: false,
+          recursive: true,
+          force: true
+        });
+      } else if (options.copyStrategy === "rsync") {
+        await rsync("rsync", ["-avqR", ".", targetPath], { stdio: "inherit", cwd: cachePath });
+      } else {
+        (0, import_core.setFailed)(`Unknown copy strategy ${options.copyStrategy}`);
+        return;
+      }
+      log_default.info(`Cache found and restored to ${options.path} with ${options.copyStrategy} strategy`);
       (0, import_core.setOutput)("cache-hit", true);
     } else {
       log_default.info(`Skipping: cache not found for ${options.path}.`);
