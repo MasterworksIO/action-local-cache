@@ -2270,7 +2270,7 @@ var require_io_util = __commonJS({
     exports.IS_WINDOWS = process.platform === "win32";
     exports.UV_FS_O_EXLOCK = 268435456;
     exports.READONLY = fs.constants.O_RDONLY;
-    function exists(fsPath) {
+    function exists2(fsPath) {
       return __awaiter(this, void 0, void 0, function* () {
         try {
           yield exports.stat(fsPath);
@@ -2283,7 +2283,7 @@ var require_io_util = __commonJS({
         return true;
       });
     }
-    exports.exists = exists;
+    exports.exists = exists2;
     function isDirectory(fsPath, useStat = false) {
       return __awaiter(this, void 0, void 0, function* () {
         const stats = useStat ? yield exports.stat(fsPath) : yield exports.lstat(fsPath);
@@ -2443,7 +2443,7 @@ var require_io = __commonJS({
     var assert_1 = __require("assert");
     var path2 = __importStar(__require("path"));
     var ioUtil = __importStar(require_io_util());
-    function cp(source, dest, options = {}) {
+    function cp2(source, dest, options = {}) {
       return __awaiter(this, void 0, void 0, function* () {
         const { force, recursive, copySourceDirectory } = readCopyOptions(options);
         const destStat = (yield ioUtil.exists(dest)) ? yield ioUtil.stat(dest) : null;
@@ -2469,7 +2469,7 @@ var require_io = __commonJS({
         }
       });
     }
-    exports.cp = cp;
+    exports.cp = cp2;
     function mv2(source, dest, options = {}) {
       return __awaiter(this, void 0, void 0, function* () {
         if (yield ioUtil.exists(dest)) {
@@ -2480,7 +2480,7 @@ var require_io = __commonJS({
           }
           if (destExists) {
             if (options.force == null || options.force) {
-              yield rmRF(dest);
+              yield rmRF2(dest);
             } else {
               throw new Error("Destination already exists");
             }
@@ -2491,7 +2491,7 @@ var require_io = __commonJS({
       });
     }
     exports.mv = mv2;
-    function rmRF(inputPath) {
+    function rmRF2(inputPath) {
       return __awaiter(this, void 0, void 0, function* () {
         if (ioUtil.IS_WINDOWS) {
           if (/[*"<>|]/.test(inputPath)) {
@@ -2510,7 +2510,7 @@ var require_io = __commonJS({
         }
       });
     }
-    exports.rmRF = rmRF;
+    exports.rmRF = rmRF2;
     function mkdirP2(fsPath) {
       return __awaiter(this, void 0, void 0, function* () {
         assert_1.ok(fsPath, "a path argument must be provided");
@@ -2868,6 +2868,7 @@ var import_io = __toESM(require_io());
 var core = __toESM(require_core());
 var { GITHUB_REPOSITORY, RUNNER_TOOL_CACHE } = process.env;
 var CWD = process.cwd();
+var STRATEGIES = ["copy-immutable", "copy", "move"];
 var getVars = () => {
   if (!RUNNER_TOOL_CACHE) {
     throw new TypeError("Expected RUNNER_TOOL_CACHE environment variable to be defined.");
@@ -2877,10 +2878,14 @@ var getVars = () => {
   }
   const options = {
     key: core.getInput("key") || "no-key",
-    path: core.getInput("path")
+    path: core.getInput("path"),
+    strategy: core.getInput("strategy")
   };
   if (!options.path) {
     throw new TypeError("path is required but was not provided.");
+  }
+  if (!Object.values(STRATEGIES).includes(options.strategy)) {
+    throw new TypeError(`Unknown strategy ${options.strategy}`);
   }
   const cacheDir = path__default.default.join(RUNNER_TOOL_CACHE, GITHUB_REPOSITORY, options.key);
   const cachePath = path__default.default.join(cacheDir, options.path);
@@ -2916,11 +2921,28 @@ if (process.env.LOG_LEVEL) {
 var log_default = import_loglevel.default;
 
 // src/post.ts
+var import_io_util = __toESM(require_io_util());
 async function post() {
   try {
-    const { cacheDir, targetPath, cachePath } = getVars();
+    const { cacheDir, targetPath, cachePath, options } = getVars();
     await (0, import_io.mkdirP)(cacheDir);
-    await (0, import_io.mv)(targetPath, cachePath, { force: true });
+    switch (options.strategy) {
+      case "copy-immutable":
+        if (await (0, import_io_util.exists)(cachePath)) {
+          log_default.info(`Cache already exists, skipping`);
+          return;
+        }
+        await (0, import_io.cp)(targetPath, cachePath, { copySourceDirectory: true, recursive: true });
+        break;
+      case "copy":
+        await (0, import_io.rmRF)(cachePath);
+        await (0, import_io.cp)(targetPath, cachePath, { copySourceDirectory: true, recursive: true });
+        break;
+      case "move":
+        await (0, import_io.mv)(targetPath, cachePath, { force: true });
+        break;
+    }
+    log_default.info(`Cache saved to ${cachePath} with ${options.strategy} strategy`);
   } catch (error) {
     log_default.trace(error);
     (0, import_core.setFailed)(isErrorLike(error) ? error.message : `unknown error: ${error}`);

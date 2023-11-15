@@ -5,12 +5,16 @@ import * as core from '@actions/core'
 const { GITHUB_REPOSITORY, RUNNER_TOOL_CACHE } = process.env
 const CWD = process.cwd()
 
+export const STRATEGIES = ['copy-immutable', 'copy', 'move'] as const
+export type Strategy = typeof STRATEGIES[number]
+
 type Vars = {
   cacheDir: string
   cachePath: string
   options: {
     key: string
-    path: string
+    path: string,
+    strategy: Strategy
   }
   targetDir: string
   targetPath: string
@@ -28,10 +32,15 @@ export const getVars = (): Vars => {
   const options = {
     key: core.getInput('key') || 'no-key',
     path: core.getInput('path'),
+    strategy: core.getInput('strategy') as Strategy,
   }
 
   if (!options.path) {
     throw new TypeError('path is required but was not provided.')
+  }
+
+  if (!Object.values(STRATEGIES).includes(options.strategy)) {
+    throw new TypeError(`Unknown strategy ${options.strategy}`)
   }
 
   const cacheDir = path.join(RUNNER_TOOL_CACHE, GITHUB_REPOSITORY, options.key)
