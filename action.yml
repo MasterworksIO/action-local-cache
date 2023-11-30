@@ -7,6 +7,10 @@ inputs:
   path:
     description: 'The file or folder to be cached'
     required: true
+  strategy:
+    description: 'Caching mechanism to be used'
+    required: false
+    default: 'move'
 outputs:
   cache-hit:
     description: 'A boolean value to indicate if cache was found and restored'

@@ -2443,7 +2443,7 @@ var require_io = __commonJS({
     var assert_1 = __require("assert");
     var path2 = __importStar(__require("path"));
     var ioUtil = __importStar(require_io_util());
-    function cp(source, dest, options = {}) {
+    function cp2(source, dest, options = {}) {
       return __awaiter(this, void 0, void 0, function* () {
         const { force, recursive, copySourceDirectory } = readCopyOptions(options);
         const destStat = (yield ioUtil.exists(dest)) ? yield ioUtil.stat(dest) : null;
@@ -2469,7 +2469,7 @@ var require_io = __commonJS({
         }
       });
     }
-    exports.cp = cp;
+    exports.cp = cp2;
     function mv2(source, dest, options = {}) {
       return __awaiter(this, void 0, void 0, function* () {
         if (yield ioUtil.exists(dest)) {
@@ -2869,6 +2869,7 @@ var import_io_util = __toESM(require_io_util());
 var core = __toESM(require_core());
 var { GITHUB_REPOSITORY, RUNNER_TOOL_CACHE } = process.env;
 var CWD = process.cwd();
+var STRATEGIES = ["copy-immutable", "copy", "move"];
 var getVars = () => {
   if (!RUNNER_TOOL_CACHE) {
     throw new TypeError("Expected RUNNER_TOOL_CACHE environment variable to be defined.");
@@ -2878,10 +2879,14 @@ var getVars = () => {
   }
   const options = {
     key: core.getInput("key") || "no-key",
-    path: core.getInput("path")
+    path: core.getInput("path"),
+    strategy: core.getInput("strategy")
   };
   if (!options.path) {
     throw new TypeError("path is required but was not provided.");
+  }
+  if (!Object.values(STRATEGIES).includes(options.strategy)) {
+    throw new TypeError(`Unknown strategy ${options.strategy}`);
   }
   const cacheDir = path__default.default.join(RUNNER_TOOL_CACHE, GITHUB_REPOSITORY, options.key);
   const cachePath = path__default.default.join(cacheDir, options.path);
@@ -2922,8 +2927,19 @@ async function main() {
     const { cachePath, targetDir, targetPath, options } = getVars();
     if (await (0, import_io_util.exists)(cachePath)) {
       await (0, import_io.mkdirP)(targetDir);
-      await (0, import_io.mv)(cachePath, targetPath, { force: true });
-      log_default.info(`Cache found and restored to ${options.path}`);
+      switch (options.strategy) {
+        case "copy-immutable":
+        case "copy":
+          await (0, import_io.cp)(cachePath, targetPath, {
+            copySourceDirectory: false,
+            recursive: true
+          });
+          break;
+        case "move":
+          await (0, import_io.mv)(cachePath, targetPath, { force: true });
+          break;
+      }
+      log_default.info(`Cache found and restored to ${options.path} with ${options.strategy} strategy`);
       (0, import_core.setOutput)("cache-hit", true);
     } else {
       log_default.info(`Skipping: cache not found for ${options.path}.`);

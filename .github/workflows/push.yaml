@@ -1,9 +1,6 @@
 name: Push
 on: push
 
-env:
-  SHARED_CACHE_RUN_KEY: CACHE_V1-${{ github.run_id }}-${{ github.run_attempt }}
-
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -12,7 +9,7 @@ jobs:
     - run: npm install
     - run: npm run all
 
-  first-run:
+  test-move-strategy-run1:
     runs-on:
       group: local-action-cache
     steps:
@@ -22,26 +19,158 @@ jobs:
       uses: ./
       with:
         path: './demo-output.txt'
-        key: ${{ env.SHARED_CACHE_RUN_KEY }}
+        key: CACHE_V1-${{ github.run_id }}-${{ github.run_attempt }}-move
     - name: Assert output
       if: steps.first-run.outputs.cache-hit == 'true'
       run: echo "Should not have done cache hit" && exit 1
     - name: Write cache file
       run: echo "demo-results" > ./demo-output.txt
 
-  second-run:
+  test-move-strategy-run2:
     runs-on:
       group: local-action-cache
-    needs: [first-run]
+    needs: [test-move-strategy-run1]
     steps:
     - uses: actions/checkout@v3
     - uses: ./
       id: 'second-run'
       with:
         path: './demo-output.txt'
-        key: ${{ env.SHARED_CACHE_RUN_KEY }}
+        key: CACHE_V1-${{ github.run_id }}-${{ github.run_attempt }}-move
     - name: Assert output
       if: steps.second-run.outputs.cache-hit != 'true'
       run: echo "Should have hit cache" && exit 1
     - name: Check contents
-      run: cat ./demo-output.txt
+      run: |
+        if [ $(cat ./demo-output.txt) != "demo-results" ]; then
+          echo "Wrong cached contents: $(cat ./demo-output.txt)"
+          exit 1
+        fi
+
+  test-copy-strategy-run1:
+    runs-on:
+      group: local-action-cache
+    steps:
+    - uses: actions/checkout@v3
+    - name: 'Run first time without cache'
+      id: 'first-run'
+      uses: ./
+      with:
+        path: './demo-output.txt'
+        key: CACHE_V1-${{ github.run_id }}-${{ github.run_attempt }}-copy
+        strategy: copy
+    - name: Assert output
+      if: steps.first-run.outputs.cache-hit == 'true'
+      run: echo "Should not have done cache hit" && exit 1
+    - name: Write cache file
+      run: echo "demo-results" > ./demo-output.txt
+
+  test-copy-strategy-run2:
+    runs-on:
+      group: local-action-cache
+    needs: [test-copy-strategy-run1]
+    steps:
+    - uses: actions/checkout@v3
+    - uses: ./
+      id: 'second-run'
+      with:
+        path: './demo-output.txt'
+        key: CACHE_V1-${{ github.run_id }}-${{ github.run_attempt }}-copy
+        strategy: copy
+    - name: Assert output
+      if: steps.second-run.outputs.cache-hit != 'true'
+      run: echo "Should have hit cache" && exit 1
+    - name: Check contents
+      run: |
+        if [ $(cat ./demo-output.txt) != "demo-results" ]; then
+          echo "Wrong cached contents: $(cat ./demo-output.txt)"
+          exit 1
+        fi
+    - name: Change contents
+      run: echo "changed-results" > ./demo-output.txt
+
+  test-copy-strategy-run3:
+    runs-on:
+      group: local-action-cache
+    needs: [test-copy-strategy-run2]
+    steps:
+    - uses: actions/checkout@v3
+    - uses: ./
+      id: 'third-run'
+      with:
+        path: './demo-output.txt'
+        key: CACHE_V1-${{ github.run_id }}-${{ github.run_attempt }}-copy
+        strategy: copy
+    - name: Assert output
+      if: steps.third-run.outputs.cache-hit != 'true'
+      run: echo "Should have hit cache" && exit 1
+    - name: Check contents
+      run: |
+        if [ $(cat ./demo-output.txt) != "changed-results" ]; then
+          echo "Wrong cached contents: $(cat ./demo-output.txt)"
+          exit 1
+        fi
+
+  test-copy-strategy-immutable-run1:
+    runs-on:
+      group: local-action-cache
+    steps:
+    - uses: actions/checkout@v3
+    - name: 'Run first time without cache'
+      id: 'first-run'
+      uses: ./
+      with:
+        path: './demo-output.txt'
+        key: CACHE_V1-${{ github.run_id }}-${{ github.run_attempt }}-copy-immutable
+        strategy: copy-immutable
+    - name: Assert output
+      if: steps.first-run.outputs.cache-hit == 'true'
+      run: echo "Should not have done cache hit" && exit 1
+    - name: Write cache file
+      run: echo "demo-results" > ./demo-output.txt
+
+  test-copy-strategy-immutable-run2:
+    runs-on:
+      group: local-action-cache
+    needs: [test-copy-strategy-immutable-run1]
+    steps:
+    - uses: actions/checkout@v3
+    - uses: ./
+      id: 'second-run'
+      with:
+        path: './demo-output.txt'
+        key: CACHE_V1-${{ github.run_id }}-${{ github.run_attempt }}-copy-immutable
+        strategy: copy-immutable
+    - name: Assert output
+      if: steps.second-run.outputs.cache-hit != 'true'
+      run: echo "Should have hit cache" && exit 1
+    - name: Check contents
+      run: |
+        if [ $(cat ./demo-output.txt) != "demo-results" ]; then
+          echo "Wrong cached contents: $(cat ./demo-output.txt)"
+          exit 1
+        fi
+    - name: Change contents
+      run: echo "changed-results" > ./demo-output.txt
+
+  test-copy-strategy-immutable-run3:
+    runs-on:
+      group: local-action-cache
+    needs: [test-copy-strategy-immutable-run2]
+    steps:
+    - uses: actions/checkout@v3
+    - uses: ./
+      id: 'third-run'
+      with:
+        path: './demo-output.txt'
+        key: CACHE_V1-${{ github.run_id }}-${{ github.run_attempt }}-copy-immutable
+        strategy: copy-immutable
+    - name: Assert output
+      if: steps.third-run.outputs.cache-hit != 'true'
+      run: echo "Should have hit cache" && exit 1
+    - name: Check contents
+      run: |
+        if [ $(cat ./demo-output.txt) != "demo-results" ]; then
+          echo "Wrong cached contents: $(cat ./demo-output.txt)"
+          exit 1
+        fi
