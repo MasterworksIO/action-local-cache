@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## 2.1.0 - 2023-12-22
+
+- Implement copy and copy-immutable strategies (#20) thanks @oNaiPs
 
 ## 2.0.0 - 2023-08-07
 

@@ -1,6 +1,6 @@
 {
   "name": "action-local-cache",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "description": "A Github Action to save and restore files across job runs directly in the runner's file system",
   "main": "dist/main/index.js",
